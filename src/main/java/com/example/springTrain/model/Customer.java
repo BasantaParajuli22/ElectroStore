@@ -26,6 +26,8 @@ public class Customer {
     private String address;
     @OneToMany(mappedBy = "customer")
     private List<Order> orders;
+    
+    
 	public Long getId() {
 		return id;
 	}

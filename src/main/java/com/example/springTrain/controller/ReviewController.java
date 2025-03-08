@@ -2,7 +2,6 @@ package com.example.springTrain.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,9 +18,11 @@ import com.example.springTrain.service.ReviewService;
 @RequestMapping("/api/reviews")
 public class ReviewController {
 
-    @Autowired
-    private ReviewService reviewService;
+    private final ReviewService reviewService;
 
+    public ReviewController(ReviewService reviewService) {
+        this.reviewService = reviewService;
+    }
     @GetMapping
     public List<Review> getAllReviews() {
         return reviewService.getAllReviews();

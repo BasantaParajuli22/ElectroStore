@@ -2,6 +2,9 @@ package com.example.springTrain.model;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import com.example.springTrain.enums.ProductCategory;
 
 import jakarta.persistence.Entity;
@@ -22,8 +25,11 @@ public class Product {
     @Enumerated(EnumType.STRING)
     private ProductCategory category;
     private int stockQuantity;
+    @CreationTimestamp
     private LocalDateTime createdAt;
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
+    
 	public Long getId() {
 		return id;
 	}

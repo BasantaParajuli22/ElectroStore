@@ -2,6 +2,9 @@ package com.example.springTrain.model;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import com.example.springTrain.enums.UserRole;
 
 import jakarta.persistence.Entity;
@@ -24,7 +27,9 @@ public class User {
     private String email;
     @Enumerated(EnumType.STRING)
     private UserRole role;
+    @CreationTimestamp
     private LocalDateTime createdAt;
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
     
 	public Long getId() {

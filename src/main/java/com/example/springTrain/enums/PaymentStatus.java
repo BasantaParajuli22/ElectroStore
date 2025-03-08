@@ -1,5 +1,5 @@
 package com.example.springTrain.enums;
 
 public enum PaymentStatus {
-    PAID, UNPAID
+    PAID, UNPAID,PENDING
 }

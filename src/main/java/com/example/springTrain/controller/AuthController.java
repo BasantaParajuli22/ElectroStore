@@ -14,41 +14,38 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.springTrain.dto.JwtRespnose;
 import com.example.springTrain.dto.LoginRequest;
-import com.example.springTrain.dto.UserDto;
-import com.example.springTrain.service.UserService;
+import com.example.springTrain.dto.RegistrationRequest;
+import com.example.springTrain.service.RegistrationService;
 import com.example.springTrain.util.JwtUtil;
-
 
 
 @RestController
 public class AuthController {
 
 	Logger logger = LoggerFactory.getLogger(AuthController.class);
-	private UserService userService; 
+	
+	private RegistrationService registrationService; 
 	private AuthenticationManager authenticationManager; //to authenticate user
 	private JwtUtil jwtUtil; //to generate token
 	
-	public AuthController( UserService userService,
-			AuthenticationManager authenticationManager,
-			JwtUtil jwtUtil) {
+	public AuthController(AuthenticationManager authenticationManager,
+			JwtUtil jwtUtil,
+			RegistrationService registrationService) {
 		this.authenticationManager = authenticationManager;
 		this.jwtUtil = jwtUtil;
-		this.userService= userService;
+		this.registrationService= registrationService;
 	}
 	
 	@PostMapping("/register")
-	public ResponseEntity<String> registerNewUser(@RequestBody UserDto userDto) {
+	public ResponseEntity<String> registerNewUser(@RequestBody RegistrationRequest request) {
 		
-		
-		logger.info(userDto.getEmail());
-		logger.info("role "+ userDto.getRole());
-		logger.info(userDto.getUsername());
+
 		try {
-			userService.createUser(userDto);
+			registrationService.createUserAndCustomer(request.getUserDto(), request.getCustomerDto());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return ResponseEntity.status(400).body("body cannot be null");
+			return ResponseEntity.status(400).body("user creation has failed");
 		}
 		return ResponseEntity.ok("user created successfully");
 	}
@@ -56,9 +53,9 @@ public class AuthController {
 	@PostMapping("/login")
 	public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
 		
-		logger.info(loginRequest.getEmail());
-		logger.info(loginRequest.getPassword());
-		
+//		logger.info(loginRequest.getEmail());
+//		logger.info(loginRequest.getPassword());
+//		
 		//The UsernamePasswordAuthenticationToken is created with the username and password from the LoginRequest.
 		//The authenticationManager.authenticate() method is called to authenticate the user.
 		Authentication authentication = authenticationManager.authenticate(

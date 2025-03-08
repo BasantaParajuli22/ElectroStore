@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.springTrain.dto.UserDto;
+import com.example.springTrain.enums.UserRole;
 import com.example.springTrain.model.User;
 import com.example.springTrain.repository.UserRepository;
 
@@ -16,10 +17,8 @@ import jakarta.transaction.Transactional;
 @Service
 public class UserService {
 
-
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
-
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
     	this.userRepository = userRepository;
@@ -42,16 +41,16 @@ public class UserService {
     		throw new Exception("User cannot null");
     	}
     	Optional<User> existingEmail = userRepository.findByEmail(userDto.getEmail());
-    	
     	if(existingEmail.isPresent()) {
     		throw new RuntimeException("Email already exists");
     	}
     	
     	User user =new User();
     	user.setEmail(userDto.getEmail());
-    	user.setRole(userDto.getRole());
     	user.setUsername(userDto.getUsername());
-    	user.setPassword(passwordEncoder.encode( userDto.getPassword()) );
+    	user.setPassword(passwordEncoder.encode( userDto.getPassword()) );    	
+    	user.setRole(userDto.getRole());
+    	
         return userRepository.save(user);
     }
 
@@ -70,9 +69,9 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUser(Long id) {
+    public void deleteUser(Long id) throws Exception {
     	userRepository.findById(id)
-		.orElseThrow(() -> new RuntimeException("User not found"));
+		.orElseThrow(() -> new Exception("User not found"));
     	
         userRepository.deleteById(id);
     }

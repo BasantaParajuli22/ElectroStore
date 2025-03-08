@@ -27,10 +27,15 @@ public class HomeController {
         return "This is the Home Page!";
     }
     
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @GetMapping("/protected")
-    public String protectedPage() {
-        return "This is the protected Page!";
+    @GetMapping("/api/admin/protected")
+    public String adminProtectedPage() {
+        return "This is the protected Page! only for admin";
     }
+    
+    @GetMapping("/api/customer/protected")
+    public String protectedPage() {
+        return "only customer can access this";
+    }
+    
     
 }

@@ -1,9 +1,11 @@
 package com.example.springTrain.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.example.springTrain.dto.OrderItemDto;
 import com.example.springTrain.model.Order;
 import com.example.springTrain.model.OrderItem;
 import com.example.springTrain.repository.OrderItemRepository;
@@ -21,25 +23,42 @@ public class OrderItemService {
         this.orderRepository = orderRepository;
     }
 
-    public List<OrderItem> addItemToOrder(Long orderId, OrderItem orderItem) {
-        // Validate input
-        if (orderId == null || orderItem == null) {
-            throw new IllegalArgumentException("OrderId or OrderItem cannot be null");
+    //to add list of orderItem to an order
+    public List<OrderItem> addItemsToOrder(Order order, List<OrderItemDto> orderItemDto) {
+        if (order == null || orderItemDto == null) {
+            throw new IllegalArgumentException("order or OrderItem cannot be null");
         }
-
-        // Fetch the order
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
-
-        // Associate the orderItem with the order
-        orderItem.setOrder(order);
-        // Save the orderItem
-        OrderItem savedItem = orderItemRepository.save(orderItem);
-
-        // Fetch and return all items for the order
-        return orderItemRepository.findAllByOrder_Id(orderId);
+        
+        List<OrderItem> orderItemList= new ArrayList<>();
+        for( OrderItemDto orderItem:  orderItemDto) {  	
+        	OrderItem newOrderItem = new OrderItem();
+        	newOrderItem.setOrder(order);     
+        	newOrderItem.setPrice(orderItem.getPrice());
+        	newOrderItem.setQuantity(orderItem.getQuantity());
+        	orderItemRepository.save(newOrderItem);
+        	
+        	orderItemList.add(newOrderItem);
+        }
+        	return orderItemList;
     }
 
+    //to add a orderItem to an order using orderId
+    public OrderItem addAItemToOrder(Long orderId, OrderItemDto orderItemDto) {
+    	 if (orderId == null || orderItemDto == null) {
+             throw new IllegalArgumentException("orderId or OrderItem cannot be null");
+         }
+    	 Order order = orderRepository.findById(orderId)
+    	 .orElseThrow( () -> new IllegalArgumentException("order cannot be found by orderId "+orderId));
+    	 
+    	OrderItem newOrderItem = new OrderItem();
+    	newOrderItem.setOrder(order);     
+    	newOrderItem.setPrice(orderItemDto.getPrice());
+    	newOrderItem.setQuantity(orderItemDto.getQuantity());
+    	orderItemRepository.save(newOrderItem);
+    	return newOrderItem;
+    	
+    }
+      
     public OrderItem updateItemInOrder(Long orderId, Long itemId, OrderItem orderItem) {
         // Validate input
         if (orderId == null || itemId == null || orderItem == null) {
@@ -63,6 +82,7 @@ public class OrderItemService {
         return orderItemRepository.save(existingItem);
     }
 
+
     public void deleteOrderItem(Long orderId, Long itemId) {
         // Validate input
         if (orderId == null || itemId == null) {
@@ -72,8 +92,10 @@ public class OrderItemService {
         // Fetch the orderItem
         OrderItem item = orderItemRepository.findByOrder_IdAndId(orderId, itemId)
                 .orElseThrow(() -> new IllegalArgumentException("OrderItem not found"));
-
         // Delete the item
         orderItemRepository.delete(item);
     }
+
+
+
 }

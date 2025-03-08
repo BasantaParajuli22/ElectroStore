@@ -22,7 +22,8 @@ public class OrderItem {
     private Product product;
     
     private int quantity;
-    private double price;
+    private double price;// Snapshot of the product price at the time of order
+    
 	public Long getId() {
 		return id;
 	}

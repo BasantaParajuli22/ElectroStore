@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.springTrain.dto.ProductDto;
 import com.example.springTrain.model.Product;
 import com.example.springTrain.repository.ProductRepository;
 
@@ -24,8 +25,14 @@ public class ProductService {
         		.orElseThrow(() -> new RuntimeException("Product not found"));
     }
 
-    public Product createProduct(Product product) {
-    	
+    public Product createProduct(ProductDto productDto) {
+    
+    	Product product = new Product();
+    	product.setCategory(productDto.getCategory());
+    	product.setDescription(productDto.getDescription());
+    	product.setName(productDto.getName());
+    	product.setPrice(productDto.getPrice());
+    	product.setStockQuantity(productDto.getStockQuantity());
         return productRepository.save(product);
     }
 

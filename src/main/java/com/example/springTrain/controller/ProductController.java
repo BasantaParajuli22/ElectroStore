@@ -2,7 +2,6 @@ package com.example.springTrain.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.springTrain.dto.ProductDto;
 import com.example.springTrain.model.Product;
 import com.example.springTrain.service.ProductService;
 
@@ -19,9 +19,12 @@ import com.example.springTrain.service.ProductService;
 @RequestMapping("/api/products")
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
 
+    private final ProductService productService;
+
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
     @GetMapping
     public List<Product> getAllProducts() {
         return productService.getAllProducts();
@@ -33,7 +36,7 @@ public class ProductController {
     }
 
     @PostMapping
-    public Product createProduct(@RequestBody Product product) {
+    public Product createProduct(@RequestBody ProductDto product) {
         return productService.createProduct(product);
     }
 

@@ -3,6 +3,8 @@ package com.example.springTrain.model;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import com.example.springTrain.enums.DeliveryStatus;
 import com.example.springTrain.enums.OrderStatus;
 import com.example.springTrain.enums.PaymentStatus;
@@ -29,6 +31,7 @@ public class Order {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
     
+    @CreationTimestamp
     private LocalDateTime orderDate;
     private double totalAmount;
     @Enumerated(EnumType.STRING)
