@@ -8,7 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.springTrain.dto.UserDto;
-import com.example.springTrain.enums.UserRole;
+import com.example.springTrain.exceptions.CreationFailedException;
 import com.example.springTrain.model.User;
 import com.example.springTrain.repository.UserRepository;
 
@@ -44,14 +44,18 @@ public class UserService {
     	if(existingEmail.isPresent()) {
     		throw new RuntimeException("Email already exists");
     	}
+    	try {
+    		User user =new User();
+    		user.setEmail(userDto.getEmail());
+    		user.setUsername(userDto.getUsername());
+    		user.setPassword(passwordEncoder.encode( userDto.getPassword()) );    	
+    		user.setRole(userDto.getRole());
+    		
+    		return userRepository.save(user);	
+		} catch (Exception e) {
+			throw new CreationFailedException("Email already exists");
+		}
     	
-    	User user =new User();
-    	user.setEmail(userDto.getEmail());
-    	user.setUsername(userDto.getUsername());
-    	user.setPassword(passwordEncoder.encode( userDto.getPassword()) );    	
-    	user.setRole(userDto.getRole());
-    	
-        return userRepository.save(user);
     }
 
     @Transactional

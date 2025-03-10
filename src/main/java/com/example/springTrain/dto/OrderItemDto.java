@@ -8,7 +8,6 @@ public class OrderItemDto {
     private Long productId;
     
     
-
 	public Long getOrderId() {
 		return orderId;
 	}

@@ -13,8 +13,8 @@ import com.example.springTrain.model.Order;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 //    // Custom query to find orders by customer ID
 //    List<Order> findByCustomer_Id(Long customerId);
-//
-//    
-    @Query("SELECT o FROM Order o WHERE o.customer.id = :id")
-	List<Order> findAllByCustomer_Id(@Param("id")Long id);
+
+	@Query("SELECT o FROM Order o WHERE o.customer.id = :id")
+	List<Order> findByCustomer_Id(@Param("id")Long id);
+
 }

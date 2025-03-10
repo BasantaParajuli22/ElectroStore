@@ -37,7 +37,6 @@ public class OrderItemController {
                                                     @RequestBody List<OrderItemDto> orderItemDto) {
    	 	Order order = orderService.getOrderById(orderId);	
         List<OrderItem> newItem = orderItemService.addItemsToOrder(order, orderItemDto);
-        
         return ResponseEntity.status(HttpStatus.CREATED).body(newItem);
     }
     

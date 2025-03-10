@@ -39,44 +39,28 @@ public class AuthController {
 	@PostMapping("/register")
 	public ResponseEntity<String> registerNewUser(@RequestBody RegistrationRequest request) {
 		
-
-		try {
-			registrationService.createUserAndCustomer(request.getUserDto(), request.getCustomerDto());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return ResponseEntity.status(400).body("user creation has failed");
-		}
+		registrationService.createUserAndCustomer(request.getUserDto(), request.getCustomerDto());
 		return ResponseEntity.ok("user created successfully");
 	}
 	
 	@PostMapping("/login")
 	public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
-		
-//		logger.info(loginRequest.getEmail());
-//		logger.info(loginRequest.getPassword());
-//		
+			
 		//The UsernamePasswordAuthenticationToken is created with the username and password from the LoginRequest.
 		//The authenticationManager.authenticate() method is called to authenticate the user.
 		Authentication authentication = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),loginRequest.getPassword())
 				);
-		logger.info("authentication is "+ authentication);
 
 		//By setting the authentication object in the SecurityContext, the user is now considered authenticated for the current request.
 		//This allows Spring Security to perform authorization checks (e.g., @PreAuthorize) for subsequent operations
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 	
-		try {		
-			//The authentication.getPrincipal() method returns the UserDetails object representing the authenticated user.
-			//then using UserDetails to generate token
-			String jwt = jwtUtil.generateToken( (UserDetails) authentication.getPrincipal());
-			return ResponseEntity.ok(new JwtRespnose(jwt)) ;//returring token
-		} catch (Exception e) {
-			logger.info("Validation of token exception "+ e);
-			return ResponseEntity.status(400).build();
-		}
-		
+		//The authentication.getPrincipal() method returns the UserDetails object representing the authenticated user.
+		//then using UserDetails to generate token
+		String jwt = jwtUtil.generateToken( (UserDetails) authentication.getPrincipal());
+		return ResponseEntity.ok(new JwtRespnose(jwt)) ;//returring token
+
 		
 	}
 	

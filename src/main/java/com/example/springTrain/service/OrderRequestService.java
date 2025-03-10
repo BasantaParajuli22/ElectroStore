@@ -36,7 +36,7 @@ public class OrderRequestService {
 	// check if orderItem exists in product and if stockquantity is available
 	@Transactional
 	public ResponseEntity<OrderRequest> createOrderAndOrderItem(OrderDto orderDto,
-			List<OrderItemDto> orderItemDtoList, long customerId) {
+			List<OrderItemDto> orderItemDtoList) {
 		
 		try {
 			//create order which is to be saved in orderItem
