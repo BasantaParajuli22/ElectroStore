@@ -1,12 +1,13 @@
 package com.example.springTrain.dto;
 
 
-//wrapper class 
+//Nested DTO (wrapper dto)  
 //wraps UserDto and CustomerDto
 public class RegistrationRequest {
 
 	private UserDto userDto;
 	private CustomerDto customerDto;
+	
 	public UserDto getUserDto() {
 		return userDto;
 	}

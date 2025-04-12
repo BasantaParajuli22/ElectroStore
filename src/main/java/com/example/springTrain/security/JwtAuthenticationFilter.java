@@ -6,9 +6,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import com.example.springTrain.util.JwtUtil;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,40 +19,54 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final CustomUserDetailsService userDetailsService;
 
     public JwtAuthenticationFilter(JwtUtil jwtUtil,
-    		CustomUserDetailsService userDetailsService) {
+            CustomUserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
     }
 
-	@Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, 
+                                   HttpServletResponse response, 
+                                   FilterChain filterChain)
             throws ServletException, java.io.IOException {
-		
-        String authHeader = request.getHeader("Authorization");
+        
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        final String userEmail;
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            String username = jwtUtil.extractUsername(token); //extract username from token
+        // Skip filter if no Bearer token
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-            if (username != null &&
-            		SecurityContextHolder.getContext().getAuthentication() == null) {
-                //extract UserDetails 
-            	UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        jwt = authHeader.substring(7);
+        userEmail = jwtUtil.extractUsername(jwt);
 
-                if (jwtUtil.validateToken(token, userDetails)) {//validate using token and userDetails
-                	
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(userDetails,
-                            		null, userDetails.getAuthorities());
-                    
-                    System.out.println( userDetails.getAuthorities());
-                    authToken
-                    	.setDetails(new WebAuthenticationDetailsSource()
-                    	.buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
+        // If user email is valid and not already authenticated
+        if (userEmail != null && 
+            SecurityContextHolder.getContext().getAuthentication() == null) {
+            
+            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            
+            // Validate token structure and expiration
+            if (jwtUtil.validateToken(jwt)) {
+                // Create authentication token
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities()
+                );
+                
+                authToken.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+                
+                // Set the authentication in the SecurityContext
+                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
+        
         filterChain.doFilter(request, response);
     }
 }

@@ -9,6 +9,7 @@ public class ProductDto {
     private double price;
     private ProductCategory category;
     private int stockQuantity;
+    private String imageName;
     
 	public String getName() {
 		return name;
@@ -39,6 +40,12 @@ public class ProductDto {
 	}
 	public void setStockQuantity(int stockQuantity) {
 		this.stockQuantity = stockQuantity;
+	}
+	public String getImageName() {
+		return imageName;
+	}
+	public void setImageName(String imageName) {
+		this.imageName = imageName;
 	}
 
 }

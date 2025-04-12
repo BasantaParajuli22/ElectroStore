@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,7 @@ import com.example.springTrain.dto.UserDto;
 import com.example.springTrain.exceptions.CreationFailedException;
 import com.example.springTrain.model.User;
 import com.example.springTrain.repository.UserRepository;
+import com.example.springTrain.util.JwtUtil;
 
 import jakarta.transaction.Transactional;
 
@@ -19,10 +21,14 @@ public class UserService {
 
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
+    private JwtUtil jwtUtil;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+    		PasswordEncoder passwordEncoder,
+    		JwtUtil jwtUtil) {
     	this.userRepository = userRepository;
     	this.passwordEncoder = passwordEncoder;
+    	this.jwtUtil = jwtUtil;
     }
     
     public List<User> getAllUsers() {
@@ -79,4 +85,17 @@ public class UserService {
     	
         userRepository.deleteById(id);
     }
+
+	public Optional<User> findByEmail(String currentUsername) {
+		// TODO Auto-generated method stub
+		return userRepository.findByEmail(currentUsername);
+	}
+	
+
+	public User getUserFromToken(String token) {
+        String email = jwtUtil.getUserEmailFromToken(token);
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    }
+	
 }

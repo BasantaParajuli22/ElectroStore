@@ -18,7 +18,7 @@ import com.example.springTrain.model.Order;
 import com.example.springTrain.service.CustomerService;
 
 @RestController
-@RequestMapping("/api/customers")
+@RequestMapping("/api/users")
 public class CustomerController {
 
     private final CustomerService customerService;

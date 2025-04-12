@@ -9,6 +9,8 @@ import com.example.springTrain.model.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    // Custom query to find a user by email (optional)
+
+
+	// Custom query to find a user by email (optional)
     Optional<User> findByEmail(String email);
 }

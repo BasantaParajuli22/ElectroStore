@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.springTrain.dto.CustomerDto;
 import com.example.springTrain.dto.JwtRespnose;
 import com.example.springTrain.dto.LoginRequest;
 import com.example.springTrain.dto.RegistrationRequest;
+import com.example.springTrain.dto.UserDto;
 import com.example.springTrain.service.RegistrationService;
 import com.example.springTrain.util.JwtUtil;
 
@@ -36,12 +38,27 @@ public class AuthController {
 		this.registrationService= registrationService;
 	}
 	
+	@PostMapping("/signup")
+	public ResponseEntity<String> signUpByUser(@RequestBody UserDto userDto) {
+		
+		registrationService.createUser(userDto);
+		return ResponseEntity.ok("user created successfully");
+	}
+	
+	@PostMapping("/signup/details")
+	public ResponseEntity<String> signUpByUserDetails(@RequestBody CustomerDto customerDto) {
+		
+		registrationService.createUserDetails(customerDto);
+		return ResponseEntity.ok("user details created successfully");
+	}
+	
 	@PostMapping("/register")
 	public ResponseEntity<String> registerNewUser(@RequestBody RegistrationRequest request) {
 		
 		registrationService.createUserAndCustomer(request.getUserDto(), request.getCustomerDto());
-		return ResponseEntity.ok("user created successfully");
+		return ResponseEntity.ok("user and customer details created successfully");
 	}
+	
 	
 	@PostMapping("/login")
 	public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
