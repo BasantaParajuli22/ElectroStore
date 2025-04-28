@@ -1,37 +1,74 @@
-HELP.md
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+# Logs
+logs
+*.log
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+# Frontend (React)
+frontend/.env
+frontend/.env.local
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.DS_Store
+frontend/coverage/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# Backend (Spring Boot)
+backend/target/
+backend/.settings/
+backend/.project
+backend/.classpath
+backend/.factorypath
+backend/.springBeans
+backend/*.jar
+backend/*.war
+backend/logs/
+backend/.gradle/
+backend/build/
+backend/bin/
+backend/.env
+
+# IDE specific
+.idea/
 *.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
 .vscode/
+!.vscode/extensions.json
+*.sw?
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# Gradle
+.gradle/
+build/
+
+# Java
+*.class
+*.war
+*.ear
+hs_err_pid*
+
+# Temp files
+*.tmp
+*.bak
+*.swp
+*~.nib
+temp/
