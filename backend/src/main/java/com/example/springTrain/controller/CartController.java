@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.springTrain.dto.AddToCartDTO;
@@ -48,9 +49,10 @@ public class CartController {
 
     @PostMapping("/cart/add")
     public ResponseEntity<?> addToCart(
-            @RequestBody AddToCartDTO addToCartDTO,
-            @RequestParam("email") String email) {
-        
+            @RequestBody AddToCartDTO addToCartDTO) {
+    	   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+           String email = authentication.getName(); // Get the username (email) from the token
+           
         logger.info("Add to cart request for user: {}", email);
         try {
             User user = userService.findByUserEmail(email);
@@ -72,8 +74,10 @@ public class CartController {
     }
 
     @GetMapping("/cart")
-    public ResponseEntity<?> getCartItems(@RequestParam("email") String email) {
-        logger.debug("Fetching cart items for user: {}", email);
+    public ResponseEntity<?> getCartItems() {
+ 	   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+       String email = authentication.getName(); // Get the username (email) from the token
+       
         try {
             User user = userService.findByUserEmail(email);
             if (user == null) {
@@ -92,7 +96,10 @@ public class CartController {
     }
 
     @GetMapping("/cart/count")
-    public ResponseEntity<?> getCartCount(@RequestParam("email") String email) {
+    public ResponseEntity<?> getCartCount() {
+    	
+ 	   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+       String email = authentication.getName(); // Get the username (email) from the token
         try {
             User user = userService.findByUserEmail(email);
             if (user == null) {
@@ -110,11 +117,10 @@ public class CartController {
 
     @DeleteMapping("/cart/delete/{cartItemId}")
     public ResponseEntity<?> deleteCartItem(
-            @PathVariable("cartItemId") Long cartItemId,
-            @RequestParam("email") String email) {
-        
-        logger.info("Delete cart item {} for user {}", cartItemId, email);
-        try {
+            @PathVariable("cartItemId") Long cartItemId) {
+ 	   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+       String email = authentication.getName(); // Get the username (email) from the token
+       try {
             User user = userService.findByUserEmail(email);
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -132,10 +138,11 @@ public class CartController {
 
     @PutMapping("/cart/update")
     public ResponseEntity<?> updateCartItem(
-            @RequestParam("email") String email,
             @RequestBody AddToCartDTO updateDTO) {
 
-        logger.info("Update cart item {} for user {}", updateDTO.getProductId(), email);
+ 	   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+       String email = authentication.getName(); // Get the username (email) from the token
+       
         try {
             User user = userService.findByUserEmail(email);
             if (user == null) {

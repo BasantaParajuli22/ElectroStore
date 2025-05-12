@@ -1,168 +1,163 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import './styles/Cart.css';
 
-const CartPage = ({ user, updateCartCount }) => {
+const CartPage = ({ updateCartCount }) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
-  const calculateTotal = () => {
-    return cartItems.reduce(
-      (total, item) => total + (item.price * item.quantity),
-      0
-    ).toFixed(2);
-  };
+  useEffect(() => {
+    fetchCartData();
+  }, []);
 
-  const fetchCartItems = async () => {
+  const fetchCartData = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const response = await fetch(`http://localhost:8080/api/users/cart?email=${user.email}`);
-
-      if (!response.ok) {
-        throw new Error(response.status === 401 ? 'Please login again' : 'Failed to fetch cart');
+      const token = localStorage.getItem('jwtToken');
+      if (!token) {
+        setError('Unauthorized');
+        setLoading(false);
+        return;
       }
-
-      const data = await response.json();
-      setCartItems(data);
-    } catch (err) {
-      setError(err.message);
-      if (err.message.includes('401')) {
-        localStorage.removeItem('user');
-        navigate('/login');
+      const response = await fetch('http://localhost:8080/api/users/cart', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCartItems(data);
+      } else if (response.status === 401) {
+        setError('Unauthorized');
+        localStorage.removeItem('jwtToken');
+        // Optionally redirect to login
+      } else {
+        setError('Failed to fetch cart items');
       }
+    } catch (error) {
+      setError('Failed to fetch cart items');
+      console.error('Error fetching cart:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    fetchCartItems();
-  }, [user, navigate]);
-
-  const handleRemoveItem = async (cartItemId) => {
+  const handleDeleteItem = async (cartItemId) => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/users/cart/delete/${cartItemId}?email=${user.email}`,
-        { method: 'DELETE' }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to remove item');
+      const token = localStorage.getItem('jwtToken');
+      if (!token) {
+        setError('Unauthorized');
+        return;
       }
-
-      setCartItems(prev => {
-        const updatedItems = prev.filter(item => item.id !== cartItemId);
-        updateCartCount(updatedItems.length - prev.length);
-        return updatedItems;
+      const response = await fetch(`http://localhost:8080/api/users/cart/delete/${cartItemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
-    } catch (err) {
-      setError(err.message);
+      if (response.ok) {
+        setCartItems(prevItems => prevItems.filter(item => item.cartItemId !== cartItemId));
+        updateCartCount(-1);
+      } else if (response.status === 404) {
+        setError('Item not found in cart.');
+      } else if (response.status === 401) {
+        setError('Unauthorized');
+        localStorage.removeItem('jwtToken');
+        // Optionally redirect to login
+      } else {
+        setError('Failed to delete item.');
+      }
+    } catch (error) {
+      setError('Failed to delete item.');
+      console.error('Error deleting item:', error);
     }
   };
 
-  const handleUpdateQuantity = async (productId, newQuantity) => {
-    if (newQuantity < 1) return;
+  const handleUpdateQuantity = async (cartItemId, quantity) => {
+    if (quantity < 1) return; // Prevent negative or zero quantity
 
     try {
-      const response = await fetch(`http://localhost:8080/api/users/cart/update?email=${user.email}`, {
+      const token = localStorage.getItem('jwtToken');
+      if (!token) {
+        setError('Unauthorized');
+        return;
+      }
+      const response = await fetch('http://localhost:8080/api/users/cart/update', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: user.email,
-          productId,
-          quantity: newQuantity
-        })
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId: cartItems.find(item => item.cartItemId === cartItemId)?.product?.id, quantity }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to update quantity');
+      if (response.ok) {
+        setCartItems(prevItems =>
+          prevItems.map(item =>
+            item.cartItemId === cartItemId ? { ...item, quantity } : item
+          )
+        );
+        // Optionally update cart count if needed (depends on backend response)
+      } else if (response.status === 400) {
+        const errorData = await response.json().catch(() => null);
+        setError(errorData?.error || 'Failed to update quantity.');
+      } else if (response.status === 401) {
+        setError('Unauthorized');
+        localStorage.removeItem('jwtToken');
+        // Optionally redirect to login
+      } else {
+        setError('Failed to update quantity.');
       }
-
-      setCartItems(prev =>
-        prev.map(item =>
-          item.id === productId ? { ...item, quantity: newQuantity } : item
-        )
-      );
-    } catch (err) {
-      setError(err.message);
+    } catch (error) {
+      setError('Failed to update quantity.');
+      console.error('Error updating quantity:', error);
     }
   };
 
-  if (loading) return <div className="cart-loading">Loading cart...</div>;
-  if (error) return <div className="cart-error">Error: {error}</div>;
+  if (loading) {
+    return <div>Loading your cart...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  if (cartItems.length === 0) {
+    return <div>Your cart is empty.</div>;
+  }
 
   return (
-    <div className="cart-container">
-      <h2>Your Shopping Cart</h2>
-
-      {cartItems.length === 0 ? (
-        <div className="empty-cart">
-          <p>Your cart is empty</p>
-          <Link to="/shop" className="continue-shopping-btn">
-            Continue Shopping
-          </Link>
-        </div>
-      ) : (
-        <>
-          <div className="cart-items">
-            {cartItems.map(item => (
-              <div key={item.id} className="cart-item">
-                <img
-                  src={`http://localhost:8080/uploads/${item.imageName || 'default.png'}`}
-                  alt={item.name}
-                  className="cart-item-image"
-                />
-                <div className="cart-item-details">
-                  <h3>{item.name}</h3>
-                  <p>${item.price.toFixed(2)}</p>
-                  <div className="quantity-controls">
-                    <button
-                      onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                      disabled={item.quantity <= 1}
-                    >
-                      -
-                    </button>
-                    <span>{item.quantity}</span>
-                    <button onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}>
-                      +
-                    </button>
-                  </div>
-                </div>
-                <button
-                  className="remove-item-btn"
-                  onClick={() => handleRemoveItem(item.id)}
-                >
-                  Remove
-                </button>
+    <div className="cart-page">
+      <h2>Your Cart</h2>
+      <ul className="cart-items">
+        {cartItems.map(item => (
+          <li key={item.cartItemId} className="cart-item">
+            <div className="item-details">
+              <img
+                src={`http://localhost:8080/uploads/${item.product?.imageName || 'default.png'}`}
+                alt={item.product?.name}
+                className="item-image"
+              />
+              <div className="item-info">
+                <h3 className="item-name">{item.product?.name}</h3>
+                <p className="item-price">${item.product?.price?.toFixed(2)}</p>
               </div>
-            ))}
-          </div>
-
-          <div className="cart-summary">
-            <h3>Order Summary</h3>
-            <div className="summary-row">
-              <span>Subtotal</span>
-              <span>${calculateTotal()}</span>
             </div>
-            <div className="summary-row">
-              <span>Shipping</span>
-              <span>Free</span>
+            <div className="item-quantity">
+              <button onClick={() => handleUpdateQuantity(item.cartItemId, item.quantity - 1)}>-</button>
+              <span>{item.quantity}</span>
+              <button onClick={() => handleUpdateQuantity(item.cartItemId, item.quantity + 1)}>+</button>
             </div>
-            <div className="summary-row total">
-              <span>Total</span>
-              <span>${calculateTotal()}</span>
-            </div>
-            <button className="checkout-btn">
-              Proceed to Checkout
+            <button className="remove-item" onClick={() => handleDeleteItem(item.cartItemId)}>
+              Remove
             </button>
-          </div>
-        </>
-      )}
+          </li>
+        ))}
+      </ul>
+      <div className="cart-total">
+        Total: ${cartItems.reduce((total, item) => total + (item.product?.price * item.quantity), 0).toFixed(2)}
+      </div>
+      {/* Add checkout button or other cart actions here */}
     </div>
   );
 };

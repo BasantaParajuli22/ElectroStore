@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './styles/ProductCard.css';
 
-const ProductCard = ({ product, user, updateCartCount }) => {
+const ProductCard = ({ product, updateCartCount }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -22,39 +22,37 @@ const ProductCard = ({ product, user, updateCartCount }) => {
     setSuccess(false);
 
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (!user?.email) {
+      const token = localStorage.getItem('jwtToken');
+      if (!token) {
         navigate('/login');
         return;
       }
 
       const response = await fetch(
-        `http://localhost:8080/api/users/cart/add?email=${user.email}`,
+        'http://localhost:8080/api/users/cart/add',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
           body: JSON.stringify({ productId: product.id, quantity: 1 }),
         }
       );
 
-      // Check if the request was successful (2xx status)
       if (response.ok) {
         setSuccess(true);
-        updateCartCount?.(1); // Optional chaining in case prop isn't passed
+        updateCartCount?.(1);
+      } else if (response.status === 401) {
+        localStorage.removeItem('jwtToken');
+        navigate('/login');
       } else {
-        // Try to parse error message, fallback to status text
         const errorData = await response.json().catch(() => null);
         throw new Error(errorData?.message || response.statusText);
       }
     } catch (error) {
       console.error('Add to cart error:', error);
       setError(error.message || 'Failed to add to cart');
-
-      // Handle unauthorized (401) specifically
-      if (error.message.includes('401')) {
-        localStorage.removeItem('user');
-        navigate('/login');
-      }
     } finally {
       setIsAdding(false);
     }

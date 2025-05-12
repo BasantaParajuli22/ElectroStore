@@ -1,7 +1,6 @@
 package com.example.springTrain.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +45,10 @@ public class ProductService {
         return productRepository.findById(id)
         		.orElseThrow(() -> new RuntimeException("Product not found"));
     }
+    public Product findById(Long productId) {
+		return productRepository.findById(productId)
+				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+	}
 
     public String getSavedFileName(MultipartFile file) {
     	if(file == null) {
@@ -58,7 +61,7 @@ public class ProductService {
     
     
     @Transactional
-    public Product createProduct(ProductDto productDto,MultipartFile file) {
+    public Product createProduct(ProductDto productDto, MultipartFile file) {
     	if(productDto == null ) {
     		throw new IllegalArgumentException("productDto has null values");
     	}
@@ -98,16 +101,15 @@ public class ProductService {
     	if (id == null || productDto == null) {
             throw new InvalidInputException("Invalid input: ID or productDto data cannot be null");
         }
-    	productRepository.findById(id)
+    	Product existingProduct = productRepository.findById(id)
 		.orElseThrow(() -> new RuntimeException("Product Id not found"));
     	
-        Product product = getProductById(id);
-        product.setName(productDto.getName());
-        product.setDescription(productDto.getDescription());
-        product.setPrice(productDto.getPrice());
-        product.setCategory(productDto.getCategory());
-        product.setStockQuantity(productDto.getStockQuantity());
-        return productRepository.save(product);
+        existingProduct.setName(productDto.getName());
+        existingProduct.setDescription(productDto.getDescription());
+        existingProduct.setPrice(productDto.getPrice());
+        existingProduct.setCategory(productDto.getCategory());
+        existingProduct.setStockQuantity(productDto.getStockQuantity());
+        return productRepository.save(existingProduct);
     }
     
     @Transactional
@@ -124,10 +126,19 @@ public class ProductService {
         logger.info("Successfully deleted product with ID: {}", id);
     }
 
-	public Product findById(Long productId) {
-		// TODO Auto-generated method stub
-		return productRepository.findById(productId)
-				.orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+	
+
+	public Product saveImageOfProduct(MultipartFile file, Long id) {
+		if(id == null || file == null ) {
+    		throw new IllegalArgumentException("id or file are null");
+    	}
+		
+    	Product existingProduct = productRepository.findById(id)
+		.orElseThrow(() -> new RuntimeException("Product Id not found"));
+    	
+    	String savedFileName = getSavedFileName(file);
+    	existingProduct.setImageName(savedFileName);
+		return existingProduct;
 	}
 
 }

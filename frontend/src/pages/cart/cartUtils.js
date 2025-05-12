@@ -8,7 +8,7 @@ export const handleAddToCart = async (productId, updateCartCount, navigate) => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/cart/add?email=${user.email}`,
+        `http://localhost:8080/api/users/cart/add`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

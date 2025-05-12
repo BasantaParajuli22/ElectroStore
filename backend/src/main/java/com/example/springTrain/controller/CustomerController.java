@@ -2,8 +2,11 @@ package com.example.springTrain.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,33 +18,48 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.springTrain.dto.CustomerDto;
 import com.example.springTrain.model.Customer;
 import com.example.springTrain.model.Order;
+import com.example.springTrain.model.User;
 import com.example.springTrain.service.CustomerService;
+import com.example.springTrain.service.UserService;
 
 @RestController
 @RequestMapping("/api/customers")
 public class CustomerController {
 
     private final CustomerService customerService;
+    private final UserService userService;
 
-    public CustomerController(CustomerService customerService) {
+    public CustomerController(CustomerService customerService,
+    		UserService userService) {
         this.customerService = customerService;
+        this.userService = userService;
     }
     
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<CustomerDto>> getAllCustomers() {
         List<CustomerDto> customers = customerService.getAllCustomers();
         return ResponseEntity.ok(customers);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<Customer> getCustomerById(@PathVariable("id") Long id) {
 		Customer customer= customerService.getCustomerById(id);
 		return ResponseEntity.ok(customer);
     }
 
+    @PreAuthorize("hasRole('CUSTOMER')")
     @PutMapping("/{id}")
     public ResponseEntity<CustomerDto> updateCustomer(@PathVariable("id") Long id,
     		@RequestBody CustomerDto customerDto) {
+    	 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+         String email = authentication.getName(); // Get the username (email) from the token
+         User user = userService.findByUserEmail(email);
+         if (user == null) {
+             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+         }
+         
     	CustomerDto customer = customerService.updateCustomer(id, customerDto);
 		return ResponseEntity.ok(customer);
 	
@@ -50,6 +68,13 @@ public class CustomerController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteCustomer(@PathVariable("id") Long userId) {
+    	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName(); // Get the username (email) from the token
+        User user = userService.findByUserEmail(email);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
     	customerService.deleteCustomer(userId);
 		return ResponseEntity.noContent().build();
 	

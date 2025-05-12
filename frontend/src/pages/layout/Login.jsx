@@ -1,97 +1,77 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom'; // Import Link
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
-// In your Login.js handleSubmit function:
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const response = await fetch('http://localhost:8080/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-  try {
-    const response = await fetch('http://localhost:8080/api/users/authenticate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
-    });
+      if (response.ok) {
+        const data = await response.json();
+        // The JWT token is in the 'accessToken' field
+        const { accessToken, ...user } = data; // Extract accessToken and other user info
 
-    const data = await response.json();
+        // Store the JWT token in localStorage
+        localStorage.setItem('jwtToken', accessToken); // Use 'accessToken' here
 
-    if (!response.ok) {
-      throw new Error(data.error || 'Login failed');
+        // Optionally store other user information
+        localStorage.setItem('user', JSON.stringify(user));
+
+        onLogin(data);
+        navigate('/');
+      } else {
+        const errorData = await response.json().catch(() => null);
+        setError(errorData?.message || 'Invalid credentials');
+      }
+    } catch (error) {
+      setError('Failed to login');
+      console.error('Login error:', error);
     }
-
-    // Store the email that was used to login
-    const userData = {
-      ...data,
-      email: email // Ensure email is included
-    };
-
-    localStorage.setItem('user', JSON.stringify(userData));
-    onLogin(userData);
-
-    // Redirect
-    const from = location.state?.from || '/';
-    navigate(from, { replace: true });
-
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
-        <h2>Login to ElectroStore</h2>
-
-        {error && <div className="auth-error">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="username"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-               autoComplete="current-password"
-            />
-          </div>
-
-          <button type="submit" className="auth-btn" disabled={isLoading}>
-            {isLoading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-
-        <div className="auth-footer">
-          <span>Don't have an account? </span>
-          <Link to="/register">Register here</Link>
+      <h2>Login</h2>
+      {error && <p className="error-message">{error}</p>}
+      <form onSubmit={handleSubmit} className="auth-form">
+        <div className="form-group">
+          <label htmlFor="email">Email:</label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
-      </div>
+        <div className="form-group">
+          <label htmlFor="password">Password:</label>
+          <input
+            type="password"
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit" className="auth-button">Login</button>
+      </form>
+      <p className="auth-link">
+        Don't have an account? <Link to="/register">Register</Link>
+      </p>
     </div>
   );
 };

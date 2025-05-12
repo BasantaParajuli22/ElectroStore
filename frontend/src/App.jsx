@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import './App.css';
-import { Route, RouterProvider, createBrowserRouter, createRoutesFromElements, useNavigate } from 'react-router-dom';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import Layout from './pages/layout/Layout';
 import Home from './pages/home/Home';
 import Contact from './pages/home/Contact';
@@ -13,34 +13,47 @@ import Register from './pages/home/Register';
 import CartPage from './pages/cart/CartPage';
 
 function App() {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [jwtToken, setJwtToken] = useState(() => localStorage.getItem('jwtToken'));
   const [cartCount, setCartCount] = useState(0);
+  const navigate = useNavigate(); // useNavigate can now be used as App is within the Router context (defined in main.jsx)
 
-  const handleLogin = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    fetchCartCount(userData.email);
+  const handleLogin = (data) => {
+    setUser({ email: data.email, roles: data.roles, id: data.id, username: data.username }); // Store basic user info
+    setJwtToken(data.token);
+    localStorage.setItem('jwtToken', data.token);
+    fetchCartCount(data.token);
   };
 
   const handleLogout = () => {
     setUser(null);
+    setJwtToken(null);
     setCartCount(0);
-    localStorage.removeItem('user');
+    localStorage.removeItem('jwtToken');
   };
 
   const handleRegister = (userData) => {
+    // Assuming your registration endpoint returns the same data as login
     handleLogin(userData);
   };
 
-  const fetchCartCount = async (email) => {
+  const fetchCartCount = async (token) => {
+    if (!token) return;
     try {
-      const response = await fetch(`http://localhost:8080/api/users/cart/count?email=${email}`);
+      const response = await fetch('http://localhost:8080/api/users/cart/count', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         setCartCount(data.count);
+      } else if (response.status === 401) {
+        // Token might be invalid, log out user
+        handleLogout();
+        navigate('/login');
+      } else {
+        console.error('Failed to fetch cart count:', response.status);
       }
     } catch (error) {
       console.error('Failed to fetch cart count:', error);
@@ -52,24 +65,18 @@ function App() {
   };
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
+    // Initial check for JWT on component mount
+    if (jwtToken) {
+      // Optionally, you could fetch user details here if needed
+      // For now, we just fetch the cart count
+      fetchCartCount(jwtToken);
     }
-  }, [user]);
+  }, [jwtToken, navigate]);
 
-  // Add this effect to check auth status on initial load
-  useEffect(() => {
-    if (user) {
-      fetchCartCount(user.email);
-    }
-  }, []);
-
-  const router = createBrowserRouter(
-    createRoutesFromElements(
+  return (
+    <Routes>
       <Route path='/' element={<Layout user={user} cartCount={cartCount} onLogout={handleLogout} />}>
-        <Route path='/' element={<Home />} />
+        <Route index element={<Home />} /> {/* Use index for the default child route */}
         <Route path='/shop' element={<Products user={user} updateCartCount={updateCartCount} />} />
         <Route path='/products/:id' element={<ProductDetails user={user} updateCartCount={updateCartCount} />} />
         <Route path='/products/manage' element={<ProductManager />} />
@@ -79,13 +86,11 @@ function App() {
         <Route path="/register" element={<Register onRegister={handleRegister} />} />
         <Route
           path="/cart"
-          element={user ? <CartPage user={user} updateCartCount={updateCartCount} /> : <Login onLogin={handleLogin} />}
+          element={jwtToken ? <CartPage user={user} updateCartCount={updateCartCount} /> : <Login onLogin={handleLogin} />}
         />
       </Route>
-    )
+    </Routes>
   );
-
-  return <RouterProvider router={router} />;
 }
 
 export default App;

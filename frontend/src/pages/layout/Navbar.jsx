@@ -32,7 +32,7 @@ const Navbar = ({ user, cartCount, onLogout }) => {
                   className="navbar-auth-btn"
                   onClick={handleAuthClick}
                 >
-                  {user.name || user.email}
+                  {user.email}  {/* Use email consistently */}
                 </button>
                 {showDropdown && (
                   <div className="dropdown-menu">
