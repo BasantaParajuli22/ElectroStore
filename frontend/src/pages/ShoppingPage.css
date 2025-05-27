@@ -1,0 +1,117 @@
+/* src/pages/ShoppingPage.css */
+
+.shopping-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+}
+
+.shopping-container h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.product-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.product-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+    background-color: #fff;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+.product-image {
+    max-width: 100%;
+    height: 180px; /* Fixed height for consistency */
+    object-fit: cover; /* Ensures image covers the area */
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.product-card h3 {
+    margin: 10px 0;
+    color: #007bff;
+    font-size: 1.3em;
+}
+
+.product-price {
+    font-size: 1.2em;
+    color: #28a745;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.product-description {
+    font-size: 0.9em;
+    color: #555;
+    margin-bottom: 20px;
+    flex-grow: 1; /* Allows description to take available space */
+    max-height: 80px; /* Limit height to prevent overly long descriptions */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.product-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+    margin-top: auto; /* Pushes buttons to the bottom */
+}
+
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.add-to-cart-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.add-to-cart-btn:hover {
+    background-color: #0056b3;
+}
+
+.buy-now-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.buy-now-btn:hover {
+    background-color: #218838;
+}
+
+.error-message {
+    text-align: center;
+    color: #dc3545;
+    font-weight: bold;
+    margin-top: 50px;
+}
+
+.no-products {
+    text-align: center;
+    color: #6c757d;
+    margin-top: 50px;
+}

@@ -61,7 +61,7 @@ const ProductCard = ({ product, updateCartCount }) => {
   return (
     <div className="product-card" onClick={showProductDetails}>
       <img
-        src={`http://localhost:8080/uploads/${product.imageName || 'default.png'}`}
+        src={`http://localhost:8080/uploads/${product.imageName || 'default.webp'}`}
         alt={product.name}
         className="product-image"
       />

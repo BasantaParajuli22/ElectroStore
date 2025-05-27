@@ -32,6 +32,7 @@ public class ReviewController {
         this.reviewService = reviewService;
         this.userService = userService;
     }
+    
     @GetMapping
     public ResponseEntity<List<ReviewDto>> getAllReviews() {
     	List<ReviewDto> reviewList = reviewService.getAllReviews();
@@ -53,12 +54,7 @@ public class ReviewController {
     
     @PostMapping
     public ResponseEntity<ReviewDto> createReview(@RequestBody ReviewDto review) {
-    	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-	    String email = authentication.getName(); // Get the username (email) from the token
-	    User user = userService.findByUserEmail(email);
-	    if (user == null) {
-	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-	    }
+	    Long userId = userService.getAuthenticatedUserId();
 	    
         ReviewDto createdReview = reviewService.createReview(review);
         return ResponseEntity.ok(createdReview);
@@ -67,26 +63,16 @@ public class ReviewController {
     @PutMapping("/{id}")
     public ResponseEntity<ReviewDto> updateReview(@PathVariable("id") Long id,
     		@RequestBody ReviewDto review) {
-    	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-	    String email = authentication.getName(); // Get the username (email) from the token
-	    User user = userService.findByUserEmail(email);
-	    if (user == null) {
-	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-	    }
-	    
+	    Long userId = userService.getAuthenticatedUserId();
+
     	ReviewDto updatedReview = reviewService.updateReview(id, review);
         return ResponseEntity.ok(updatedReview);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteReview(@PathVariable("id") Long id) {
-    	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-	    String email = authentication.getName(); // Get the username (email) from the token
-	    User user = userService.findByUserEmail(email);
-	    if (user == null) {
-	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-	    }
-	    
+	    Long userId = userService.getAuthenticatedUserId();
+
         reviewService.deleteReview(id);
         return ResponseEntity.noContent().build();
     }

@@ -1,6 +1,7 @@
 package com.example.springTrain.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.springTrain.dto.CustomerDto;
+import com.example.springTrain.dto.UserDto;
 import com.example.springTrain.model.Customer;
 import com.example.springTrain.model.Order;
 import com.example.springTrain.model.User;
@@ -47,6 +49,23 @@ public class CustomerController {
     public ResponseEntity<Customer> getCustomerById(@PathVariable("id") Long id) {
 		Customer customer= customerService.getCustomerById(id);
 		return ResponseEntity.ok(customer);
+    }
+    
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyUserProfile() {
+    	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName(); // Get the username (email) from the token
+     
+        try {
+        	User user = userService.findByUserEmail(email);
+        	Customer customer = customerService.getCustomerByUserId(user.getId());
+
+        	CustomerDto customerDto = customerService.getCustomerDtoById(customer.getId());
+        	
+            return ResponseEntity.ok(customerDto);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
     }
 
     @PreAuthorize("hasRole('CUSTOMER')")

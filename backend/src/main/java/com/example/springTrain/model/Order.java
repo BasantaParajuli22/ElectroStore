@@ -9,6 +9,7 @@ import com.example.springTrain.enums.DeliveryStatus;
 import com.example.springTrain.enums.OrderStatus;
 import com.example.springTrain.enums.PaymentStatus;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -29,11 +30,9 @@ public class Order {
     
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
-    
+    private Customer customer; 
     @CreationTimestamp
     private LocalDateTime orderDate;
-    private double totalAmount;
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
     @Enumerated(EnumType.STRING)
@@ -41,9 +40,16 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private DeliveryStatus deliveryStatus;
     
-    @OneToMany(mappedBy = "order")
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> orderItems;
     
+    public double getTotalAmount() {
+        if (orderItems == null) return 0.0;
+        return orderItems.stream()
+            .mapToDouble(item -> item.getPrice() * item.getQuantity())
+            .sum();
+    }
+
 	public Long getId() {
 		return id;
 	}
@@ -61,12 +67,6 @@ public class Order {
 	}
 	public void setOrderDate(LocalDateTime orderDate) {
 		this.orderDate = orderDate;
-	}
-	public double getTotalAmount() {
-		return totalAmount;
-	}
-	public void setTotalAmount(double totalAmount) {
-		this.totalAmount = totalAmount;
 	}
 	public PaymentStatus getPaymentStatus() {
 		return paymentStatus;

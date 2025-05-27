@@ -2,6 +2,7 @@ package com.example.springTrain.service;
 
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import com.example.springTrain.exceptions.DeleteFailedException;
 import com.example.springTrain.exceptions.UpdateFailedException;
 import com.example.springTrain.model.Order;
 import com.example.springTrain.model.OrderItem;
+import com.example.springTrain.model.Product;
 import com.example.springTrain.repository.OrderItemRepository;
 import com.example.springTrain.repository.OrderRepository;
 
@@ -20,6 +22,8 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class OrderItemService {
+
+    private final OrderService orderService;
 	
     private final OrderItemRepository orderItemRepository;
     private final OrderRepository orderRepository;
@@ -27,26 +31,14 @@ public class OrderItemService {
     
     public OrderItemService(OrderItemRepository orderItemRepository,
     		OrderRepository orderRepository,
-    		ProductService productService) {
+    		ProductService productService, OrderService orderService) {
         this.orderItemRepository = orderItemRepository;
         this.orderRepository = orderRepository;
         this.productService = productService;
+        this.orderService = orderService;
     }
 
-    private OrderItemDto convertToOrderItemResponseDto(OrderItem orderItem) {
-    	OrderItemDto dto = new OrderItemDto();
-        dto.setId(orderItem.getId());
-        dto.setPrice(orderItem.getPrice());
-        dto.setQuantity(orderItem.getQuantity());
-        dto.setOrderId(orderItem.getOrder().getId());
-        
-        // Include product information if needed
-        if (orderItem.getProduct() != null) {
-            dto.setProductId(orderItem.getProduct().getId());
-        }
-        
-        return dto;
-    }
+    
     
     @Transactional
     public List<OrderItemDto> addItemsToOrder(Order order, List<OrderItemDto> orderItemDto) {
@@ -57,12 +49,15 @@ public class OrderItemService {
     		}
     		
 		return orderItemDto.stream()
-            .map(dto -> {
+            .map(item -> {
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(order);
-                orderItem.setPrice(dto.getPrice());
-                orderItem.setQuantity(dto.getQuantity());
-                orderItem.setProduct(productService.getProductById(dto.getProductId()));//set product in orderItem
+                boolean isQValid =isQuantityValid(order.getId(), item);
+        		if(!isQValid) {
+        			throw new CreationFailedException("Not suitable quantity placed ");
+        		}
+        		orderItem.setQuantity(item.getQuantity());
+                orderItem.setProduct(productService.getProductById(item.getProductId()));//set product in orderItem
                 return orderItemRepository.save(orderItem);
             })
             .map(this::convertToOrderItemResponseDto)
@@ -81,12 +76,16 @@ public class OrderItemService {
     		if (orderId == null || orderItemDto == null) {
     			throw new IllegalArgumentException("orderId or OrderItem cannot be null");
     		}
-    		Order order = orderRepository.findById(orderId)
-    				.orElseThrow( () -> new IllegalArgumentException("order cannot be found by orderId "+orderId));
     		
+    		boolean isQValid =isQuantityValid(orderId, orderItemDto);
+    		if(!isQValid) {
+    			throw new RuntimeException("Not suitable quantity placed ");
+    		}
+
+        	Order order = orderService.getOrderById(orderId);
+        	
     		OrderItem newOrderItem = new OrderItem();
     		newOrderItem.setOrder(order);     
-    		newOrderItem.setPrice(orderItemDto.getPrice());
     		newOrderItem.setQuantity(orderItemDto.getQuantity());
     		
     		OrderItem savedItem = orderItemRepository.save(newOrderItem);
@@ -95,24 +94,25 @@ public class OrderItemService {
             throw new CreationFailedException("addItemToOrder Failed " + e.getMessage());
 
 		}
-    	
     }
     
-    @Transactional
-    public OrderItemDto updateItemInOrder(Long orderId, Long itemId, OrderItem orderItem) {
-        try {
-			
+    
+	@Transactional
+    public OrderItemDto updateItemInOrder(Long orderId, Long itemId, OrderItemDto orderItemDto) {
+        try {	
         	// Validate input
-        	if (orderId == null || itemId == null || orderItem == null) {
+        	if (orderId == null || itemId == null || orderItemDto == null) {
         		throw new IllegalArgumentException("OrderId, ItemId, or OrderItem cannot be null");
         	}
-        	
         	// Fetch the existing orderItem
-        	OrderItem existingItem = orderItemRepository.findByOrder_IdAndId(orderId, itemId)
-        			.orElseThrow(() -> new IllegalArgumentException("OrderItem not found"));
+        	OrderItem existingItem = getOrderItemFromOrder_IdAndItemId(orderId, itemId);
         	
-        	existingItem.setQuantity(orderItem.getQuantity());
-        	existingItem.setProduct(orderItem.getProduct());
+        	boolean isQValid =isQuantityValid(orderId, orderItemDto);
+    		if(!isQValid) {
+    			throw new RuntimeException("Not suitable quantity placed ");
+    		}
+    		
+        	existingItem.setQuantity(orderItemDto.getQuantity());
         	
         	OrderItem updatedItem = orderItemRepository.save(existingItem);
             return convertToOrderItemResponseDto(updatedItem);
@@ -122,26 +122,69 @@ public class OrderItemService {
 		}
     }
 
-    @Transactional
+    
+	@Transactional
     public void deleteOrderItem(Long orderId, Long itemId) {
-
+		if (orderId == null || itemId == null) {
+			throw new IllegalArgumentException("OrderId or ItemId cannot be null");
+		}
     	try {
-    		if (orderId == null || itemId == null) {
-    			throw new IllegalArgumentException("OrderId or ItemId cannot be null");
-    		}
-    		
     		// Fetch the orderItem
-    		OrderItem item = orderItemRepository.findByOrder_IdAndId(orderId, itemId)
-    				.orElseThrow(() -> new IllegalArgumentException("OrderItem not found"));
+    		OrderItem item = getOrderItemFromOrder_IdAndItemId(orderId, itemId);
+    		
     		// Delete the item
     		orderItemRepository.delete(item);
-			
 		} catch (Exception e) {
             throw new DeleteFailedException("deleteOrderItem Failed " + e.getMessage());
 
 		}
     }
 
+	public List<OrderItemDto> viewAllItemsofOrder(Long orderId) {
+		List<OrderItem> items = orderRepository.findOrderItemsById(orderId);
 
+		return items.stream()
+			 .map(orderService::convertToOrderItemDto)
+			 .toList();
+	}
 
+	private OrderItem getOrderItemFromOrder_IdAndItemId(Long orderId, Long itemId) {
+    	OrderItem existingItem = orderItemRepository.findByOrder_IdAndId(orderId, itemId)
+    			.orElseThrow(() -> new IllegalArgumentException("OrderItem not found"));
+		return existingItem;
+    	
+	}
+
+	//helper method
+    private boolean isQuantityValid(Long orderId, OrderItemDto orderItemDto) {
+		
+		Long productId = orderItemDto.getProductId();
+		Product existingProduct =productService.getProductById(productId);
+		
+		int existingStock = existingProduct.getStockQuantity();
+		if(orderItemDto.getQuantity() <= 0) {
+			  throw new RuntimeException("Cannot place Order for 0 quantity of  " + existingProduct.getName());
+		}
+		if(existingStock <= 0 || existingStock < orderItemDto.getQuantity()) {
+			  throw new RuntimeException("Insufficient stock for product: " + existingProduct.getName());
+		}
+		return true;
+	}
+    
+    //convert OrderItem to OrderItemDto method
+    private OrderItemDto convertToOrderItemResponseDto(OrderItem orderItem) {
+    	OrderItemDto dto = new OrderItemDto();
+        dto.setId(orderItem.getId());
+        dto.setPrice(orderItem.getPrice());
+        dto.setQuantity(orderItem.getQuantity());
+        dto.setOrderId(orderItem.getOrder().getId());
+        
+        // Include product information if needed
+        if (orderItem.getProduct() != null) {
+            dto.setProductId(orderItem.getProduct().getId());
+            dto.setProductName(orderItem.getProduct().getName());
+        }
+        
+        return dto;
+    }
 }

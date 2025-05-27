@@ -118,14 +118,23 @@ public class ProductService {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         
-        logger.info("Deleting cart items for product ID: {}", id);
         int deletedCartItems = cartRepository.deleteByProductId(id);
         logger.info("Deleted {} cart items", deletedCartItems);
         
         productRepository.delete(product);
         logger.info("Successfully deleted product with ID: {}", id);
     }
+    
+    @Transactional
+    public void deleteAllProducts() {
+    	try {
+			productRepository.deleteAll();
+		} catch (Exception e) {
+			throw new RuntimeException("Error while deleting products by UserId" +e);
+		}
+    }
 
+    
 	
 
 	public Product saveImageOfProduct(MultipartFile file, Long id) {

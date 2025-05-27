@@ -101,4 +101,11 @@ public class ProductController {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
+    
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping
+    public ResponseEntity<?> deleteAllProduct() {
+        productService.deleteAllProducts();
+        return ResponseEntity.noContent().build();
+    }
 }

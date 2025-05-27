@@ -24,7 +24,7 @@ import com.example.springTrain.security.JwtTokenProvider;
 import com.example.springTrain.service.UserService;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("api/auth")
 public class AuthController {	
 
     private final AuthenticationManager authenticationManager;
@@ -56,7 +56,7 @@ public class AuthController {
     }
     
     //add new user
-    @PostMapping("/add")
+    @PostMapping("/register")
     public ResponseEntity<?> registerNewUser(@RequestBody UserDto user) {
     	try {
     		UserDto newUser = userService.createUser(user);

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.springTrain.dto.UserDto;
+import com.example.springTrain.model.User;
 import com.example.springTrain.service.UserService;
 
 
@@ -26,6 +27,21 @@ public class UserController {
         this.userService = userService;    
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyUserProfile() {
+    	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName(); // Get the username (email) from the token
+     
+        try {
+        	User user = userService.findByUserEmail(email);
+        	UserDto userDto = userService.setUserDtoInfo(user);
+        	
+            return ResponseEntity.ok(userDto);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+    
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<UserDto>> getAllUsers() {
@@ -36,7 +52,7 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable("id") Long id) {
         try {
-            UserDto user = userService.getUserById(id);
+            UserDto user = userService.getSetUserDtoById(id);
             return ResponseEntity.ok(user);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);

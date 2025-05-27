@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.springTrain.dto.OrderDto;
 import com.example.springTrain.dto.OrderRequest;
+import com.example.springTrain.model.Customer;
 import com.example.springTrain.model.User;
+import com.example.springTrain.service.CustomerService;
 import com.example.springTrain.service.OrderRequestService;
 import com.example.springTrain.service.OrderService;
 import com.example.springTrain.service.UserService;
@@ -30,13 +32,16 @@ public class OrderController {
     private final OrderRequestService orderRequestService;
     private final OrderService orderService;
     private final UserService userService;
+    private final CustomerService customerService;
 
     public OrderController(OrderRequestService orderRequestService,
     		OrderService orderService,
-    		UserService userService) {
+    		UserService userService,
+    		CustomerService customerService) {
         this.orderRequestService = orderRequestService;
         this.orderService = orderService;
         this.userService = userService;
+        this.customerService =customerService;
     }
     
     @GetMapping
@@ -47,75 +52,96 @@ public class OrderController {
 
     @GetMapping("/{id}")
     public ResponseEntity<OrderDto> getOrderDtoById(@PathVariable("id") Long id) {
-        
 		OrderDto order = orderService.getOrderDtoById(id);
 		return ResponseEntity.ok(order);
     }
     
+    @GetMapping("/my")
+    public ResponseEntity<List<OrderDto>> getMyOrders() {   	
+        Long authenticatedUserId = userService.getAuthenticatedUserId();
+        
+        Customer customer = customerService.getCustomerByUserId(authenticatedUserId);
+        List<OrderDto> orderDtos = orderService.getAllOrdersForCustomer(customer.getId());
+        
+        if (orderDtos.isEmpty()) {
+            System.out.println("No orders found for customer ID: " + customer.getId());
+        }
+        return ResponseEntity.ok(orderDtos);
+    }
+    
+    
     //create order and add orderItem at once
     @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping
-    public ResponseEntity<String> createOrderAndOrderItem(@RequestBody OrderRequest request) {	
-    	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName(); // Get the username (email) from the token
-        User user = userService.findByUserEmail(email);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    public ResponseEntity<?> createOrderAndOrderItem(@RequestBody OrderRequest request) {	
+        Long authenticatedUserId = userService.getAuthenticatedUserId();
+
+        User user = userService.getUserByUserId(authenticatedUserId);
+
+		 try {
+			 orderRequestService.createOrderAndOrderItem(request.getOrderDto(),
+					 request.getOrderItemDto(),user);
+			return ResponseEntity.ok("Order and OrdeItem Creation successful"); 
+        }catch(Exception e) {
+        	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Order and OrdeItem Creation Error: " +e.getMessage());
         }
-        
-		orderRequestService.createOrderAndOrderItem(request.getOrderDto(),
-				request.getOrderItemDto());
-		return ResponseEntity.ok("Order and OrdeItem Creation successful"); 
     }
     
     //only create order
     @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping("/new")
-    public ResponseEntity<String> createOrder(@RequestBody OrderDto orderDto) {
-    	
-    	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName(); // Get the username (email) from the token
-        User user = userService.findByUserEmail(email);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }	
-        
-		orderService.createOrder(orderDto);
-		return ResponseEntity.ok("Order Creation successfull");
+    public ResponseEntity<?> createOrder(@RequestBody OrderDto orderDto) {
+        Long authenticatedUserId = userService.getAuthenticatedUserId();
+
+    	User user = userService.getUserByUserId(authenticatedUserId);
+        try {
+        	orderService.createOrder(orderDto, user.getCustomer().getId());
+        	return ResponseEntity.ok("Order Creation successfull");
+        }catch(Exception e) {
+        	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("order creation error: " +e.getMessage());
+        }
     }
     
     @PreAuthorize("hasRole('CUSTOMER')")
     @PutMapping("/{id}")
-    public ResponseEntity<OrderDto> updateOrder(@PathVariable("id") Long id,
+    public ResponseEntity<?> updateOrder(@PathVariable("id") Long id,
     		@RequestBody OrderDto orderDto) {
-    	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName(); // Get the username (email) from the token
-        User user = userService.findByUserEmail(email);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        Long authenticatedUserId = userService.getAuthenticatedUserId();
+
+        try {
+        	OrderDto order = orderService.updateOrder(id, orderDto);
+   		 return ResponseEntity.ok(order);
+        }catch(Exception e) {
+        	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("order creation error: " +e);
         }
-        
-    	OrderDto order = orderService.updateOrder(id, orderDto);
-		 return ResponseEntity.ok(order); 
+    	 
     }
 
     @PreAuthorize("hasRole('CUSTOMER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteOrder(@PathVariable("id") Long id) {
-    	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName(); // Get the username (email) from the token
-        User user = userService.findByUserEmail(email);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        
+        Long authenticatedUserId = userService.getAuthenticatedUserId();
+
 	 	orderService.deleteOrder(id);
 	 	return ResponseEntity.noContent().build(); 
     }
+    
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @DeleteMapping("/my")
+    public ResponseEntity<?> deleteMyOrders() {
+        Long authenticatedUserId = userService.getAuthenticatedUserId();
+    	User user = userService.getUserByUserId(authenticatedUserId);
 
-    @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<OrderDto>> getOrdersByCustomerId(@PathVariable("customerId") Long customerId) {
-    	List<OrderDto> orderList = orderService.getOrdersByCustomerId(customerId);
-    	return ResponseEntity.ok(orderList); 
+	 	orderService.deleteAllOfMyOrders(user.getCustomer().getId());
+	 	return ResponseEntity.noContent().build(); 
+    }
+    
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping
+    public ResponseEntity<?> deleteALLOrders() {
+        Long authenticatedUserId = userService.getAuthenticatedUserId();  
+        
+	 	orderService.deleteAllOrders();
+	 	return ResponseEntity.noContent().build(); 
     }
 }

@@ -1,5 +1,4 @@
-// apiService.js
-const API_BASE_URL = 'http://localhost:8080/api'; // Adjust to your Spring Boot server URL
+const API_BASE_URL = 'http://localhost:8080/api';
 
 export async function fetchProducts() {
   const response = await fetch(`${API_BASE_URL}/products`);

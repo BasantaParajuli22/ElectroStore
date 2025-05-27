@@ -154,6 +154,12 @@ public class CustomerService {
             throw new ResourceNotFoundException("Customer orders couldnot be Found " + e.getMessage());
 		}
 	}
+
+	public Customer getCustomerByUserId(Long userId) {
+		Customer customer = customerRepository.findByCustomer_Id(userId);	
+		return customer;
+
+	}
 	
 	
 }

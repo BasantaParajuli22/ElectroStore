@@ -23,7 +23,7 @@ public class AdminInitializer {
             // Check if user with role ADMIN exists in the repository
             Optional<User> existingAdmin = userRepository.findByEmail(adminUsername);
             
-            if (existingAdmin == null) {  // If no admin is found, create one
+            if (existingAdmin.isEmpty()) {  // If no admin is found, create one
                 User admin = new User();
                 admin.setEmail(adminUsername);
                 admin.setPassword(passwordEncoder.encode(adminPassword)); // Password encoding

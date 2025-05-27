@@ -3,18 +3,25 @@ package com.example.springTrain.dto;
 public class OrderItemDto {
 	
 	private Long id;
+	private Long orderId;
+    private int quantity;
+    private double price;
+    
+    private Long productId;
+    private String productName;
+    
     public Long getId() {
 		return id;
 	}
 	public void setId(Long id) {
 		this.id = id;
 	}
-	private Long orderId;
-    private int quantity;
-    private double price;
-    private Long productId;
-    
-    
+	public String getProductName() {
+		return productName;
+	}
+	public void setProductName(String productName) {
+		this.productName = productName;
+	}
 	public Long getOrderId() {
 		return orderId;
 	}

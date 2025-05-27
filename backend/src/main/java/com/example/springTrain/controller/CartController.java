@@ -19,53 +19,42 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.springTrain.dto.AddToCartDTO;
 import com.example.springTrain.dto.CartCountDTO;
-import com.example.springTrain.dto.CartDTO;
-import com.example.springTrain.model.Cart;
-import com.example.springTrain.model.Product;
+import com.example.springTrain.dto.CartDto;
 import com.example.springTrain.model.User;
 import com.example.springTrain.service.CartService;
 import com.example.springTrain.service.ProductService;
 import com.example.springTrain.service.UserService;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/users/cart")
 public class CartController {
 
     private static final Logger logger = LoggerFactory.getLogger(CartController.class);
     
     private final CartService cartService;
     private final UserService userService;
-    private final ProductService productService;
 
     public CartController(CartService cartService,
     		UserService userService,
     		ProductService productService) {
         this.cartService = cartService;
         this.userService = userService;
-        this.productService = productService;
     }
 
-    @PostMapping("/cart/add")
+    @PostMapping("/add")
     public ResponseEntity<?> addToCart(
-            @RequestBody AddToCartDTO addToCartDTO) {
-    	   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-           String email = authentication.getName(); // Get the username (email) from the token
-           
-        logger.info("Add to cart request for user: {}", email);
-        try {
-            User user = userService.findByUserEmail(email);
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Collections.singletonMap("error", "User not found"));
-            }
+            @RequestBody CartDto cartDto) {
+	   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+       String email = authentication.getName(); // Get the username (email) from the token
 
-            Cart cartItem = cartService.addToCart(addToCartDTO, user);
-            logger.info("Product {} added to cart for user {}", addToCartDTO.getProductId(), email);
-            
-            return ResponseEntity.ok(cartItem);
-            
+       User user = userService.findByUserEmail(email);
+       logger.info("Add to cart request for user: {}", email);
+        try {
+
+            CartDto cartItemDto = cartService.addToCart(cartDto, user);
+            logger.info("Product {} added to cart for user {}", cartDto.getProductId(), email);
+            return ResponseEntity.ok(cartItemDto);
         } catch (RuntimeException e) {
             logger.error("Error adding to cart: {}", e.getMessage());
             return ResponseEntity.badRequest()
@@ -73,19 +62,14 @@ public class CartController {
         }
     }
 
-    @GetMapping("/cart")
+    @GetMapping
     public ResponseEntity<?> getCartItems() {
  	   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
        String email = authentication.getName(); // Get the username (email) from the token
        
+       User user = userService.findByUserEmail(email);
         try {
-            User user = userService.findByUserEmail(email);
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Collections.singletonMap("error", "Unauthorized access"));
-            }
-
-            List<CartDTO> cartItems = cartService.getCartItems(user);
+            List<CartDto> cartItems = cartService.getCartItems(user);
             return ResponseEntity.ok(cartItems);
             
         } catch (RuntimeException e) {
@@ -95,40 +79,30 @@ public class CartController {
         }
     }
 
-    @GetMapping("/cart/count")
+    @GetMapping("/count")
     public ResponseEntity<?> getCartCount() {
     	
  	   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
        String email = authentication.getName(); // Get the username (email) from the token
+       User user = userService.findByUserEmail(email);
         try {
-            User user = userService.findByUserEmail(email);
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
             long count = cartService.getCartItemsCount(user);
-            return ResponseEntity.ok(new CartCountDTO(count));
-            
+            return ResponseEntity.ok(new CartCountDTO(count));       
         } catch (RuntimeException e) {
             logger.error("Error getting cart count: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    @DeleteMapping("/cart/delete/{cartItemId}")
+    @DeleteMapping("/{cartItemId}")
     public ResponseEntity<?> deleteCartItem(
             @PathVariable("cartItemId") Long cartItemId) {
  	   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
        String email = authentication.getName(); // Get the username (email) from the token
+       User user = userService.findByUserEmail(email);
        try {
-            User user = userService.findByUserEmail(email);
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            cartService.deleteCartItem(cartItemId, user);
-            return ResponseEntity.noContent().build();
-            
+		    cartService.deleteCartItem(cartItemId, user);
+		    return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             logger.error("Error deleting cart item: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -136,23 +110,16 @@ public class CartController {
         }
     }
 
-    @PutMapping("/cart/update")
+    
+    @PutMapping
     public ResponseEntity<?> updateCartItem(
-            @RequestBody AddToCartDTO updateDTO) {
-
+            @RequestBody CartDto cartDto) {
  	   Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
        String email = authentication.getName(); // Get the username (email) from the token
-       
+     
+       User user = userService.findByUserEmail(email);
         try {
-            User user = userService.findByUserEmail(email);
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-            Product product = productService.findById(updateDTO.getProductId());
-            if (product == null) {
-                throw new RuntimeException("Product not found");
-            }
-            Cart updatedItem = cartService.updateQuantity(updateDTO, user);
+            CartDto updatedItem = cartService.updateQuantity(cartDto, user);
             return ResponseEntity.ok(updatedItem);
 
         } catch (RuntimeException e) {

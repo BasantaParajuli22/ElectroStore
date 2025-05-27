@@ -30,22 +30,16 @@ public class Cart {
     @CreationTimestamp
     private LocalDateTime createdDate;
     
+    
 	public Long getId() {
 		return id;
 	}
-
-
 	public LocalDateTime getCreatedDate() {
 		return createdDate;
 	}
-
-
 	public void setCreatedDate(LocalDateTime createdDate) {
 		this.createdDate = createdDate;
 	}
-
-
-
 	public void setId(Long id) {
 		this.id = id;
 	}

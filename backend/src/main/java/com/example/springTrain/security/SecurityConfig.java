@@ -41,7 +41,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**", "/register", "/home/**", "/api/products/**", "/uploads/**").permitAll()
+                .requestMatchers("/api/auth/**", "/register", "/home/**", "/api/products/**",
+                		"/uploads/**","/api/reviews/**").permitAll()
                 .requestMatchers( "/api/users/cart/**").hasRole("CUSTOMER")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
@@ -75,7 +76,7 @@ public class SecurityConfig {
         // If you deploy your frontend to a different URL, add it to this list.
         configuration.setAllowedOriginPatterns(List.of("http://localhost:5173"));
         // Specify allowed HTTP methods. "OPTIONS" is crucial for preflight requests.
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE","PATCH", "OPTIONS"));
         // Specify allowed headers. "Content-Type" is needed for your JSON request.
         // Add "Authorization" if you use token-based auth for other requests.
         configuration.setAllowedHeaders(Arrays.asList(

@@ -5,35 +5,27 @@ import java.util.List;
 import com.example.springTrain.enums.DeliveryStatus;
 import com.example.springTrain.enums.OrderStatus;
 import com.example.springTrain.enums.PaymentStatus;
-import com.example.springTrain.model.OrderItem;
 
 public class OrderDto {
     
 	private Long id;
-    public Long getId() {
+	private Long customerId;
+    private PaymentStatus paymentStatus;
+    private OrderStatus orderStatus;
+    private DeliveryStatus deliveryStatus;
+    private List<OrderItemDto> orderItems;
+ 
+	public Long getId() {
 		return id;
 	}
 	public void setId(Long id) {
 		this.id = id;
 	}
-	private Long customerId;
-	private double totalAmount;
-    private PaymentStatus paymentStatus;
-    private OrderStatus orderStatus;
-    private DeliveryStatus deliveryStatus;
-    private List<OrderItem> orderItems;
-
     public Long getCustomerId() {
 		return customerId;
 	}
 	public void setCustomerId(Long customerId) {
 		this.customerId = customerId;
-	}
-	public double getTotalAmount() {
-		return totalAmount;
-	}
-	public void setTotalAmount(double totalAmount) {
-		this.totalAmount = totalAmount;
 	}
 	public PaymentStatus getPaymentStatus() {
 		return paymentStatus;
@@ -53,12 +45,11 @@ public class OrderDto {
 	public void setDeliveryStatus(DeliveryStatus deliveryStatus) {
 		this.deliveryStatus = deliveryStatus;
 	}
-	public List<OrderItem> getOrderItems() {
+	public List<OrderItemDto> getOrderItems() {
 		return orderItems;
 	}
-	public void setOrderItems(List<OrderItem> orderItems) {
+	public void setOrderItems(List<OrderItemDto> orderItems) {
 		this.orderItems = orderItems;
 	}
-    
     
 }

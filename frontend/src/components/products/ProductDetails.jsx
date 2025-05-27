@@ -88,7 +88,7 @@ const ProductDetails = () => {
   if (!product) return <div className="not-found">Product not found</div>;
 
  const getImageUrl = () => {
-  return `http://localhost:8080/uploads/${product.imageName || 'null.png'}`;
+  return `http://localhost:8080/uploads/${product.imageName || 'default.webp'}`;
 };
 
 

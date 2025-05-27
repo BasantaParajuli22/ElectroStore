@@ -39,6 +39,16 @@ public class Product {
     @JsonIgnore
     private List<Cart> carts;
     
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<OrderItem> orderItems;
+
+	public List<OrderItem> getOrderItems() {
+		return orderItems;
+	}
+	public void setOrderItems(List<OrderItem> orderItems) {
+		this.orderItems = orderItems;
+	}
 	public List<Cart> getCarts() {
 		return carts;
 	}
